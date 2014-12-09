@@ -1,12 +1,3 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  @Author Wei Yao & Aaron Becker
-%
-%  @brief  analyzes some image.s  THis has a TODO list for Wei Yao
-%
-%  @Date
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 function AnalyzeKeyFrames()
 %  processes MIT video (top down camera on people holding umbrellas at
 %  night)
@@ -32,14 +23,13 @@ function AnalyzeKeyFrames()
 
 
 % 12/9/2014:
-% For next week: Wei Yao 
-% 1. learn to submit code onto github:  2 commits
-% 2. try this code: http://blogs.mathworks.com/steve/2006/06/02/cell-segmentation/  it has a walk-through example.
-% 3.    for two images, click on each umbrella so we have a ground-truth image
-% 4.        if you have time, try this (can you find the code online?):
-% C. Zhang, C. Sun, R. Su, and T. D. Pham, Segmentation of Clustered Nuclei Based on Curvature Weighting, In Image and Vision Computing New Zealand, Dunedin, New Zealand, 26-28 November 2012, pp.49-54.
+% For next week: Wei Yao  learn to submit code onto github:  2 commits
+% try this code: http://blogs.mathworks.com/steve/2006/06/02/cell-segmentation/  it has a walk-through example.
+%     for two images, click on each umbrella so we have a ground-truth image
+%         if you have time, try this (can you find the code online?):
+% %C. Zhang, C. Sun, R. Su, and T. D. Pham, Segmentation of Clustered Nuclei Based on Curvature Weighting, In Image and Vision Computing New Zealand, Dunedin, New Zealand, 26-28 November 2012, pp.49-54.
 % %http://dx.doi.org/10.1145/2425836.2425848
-% 5. if you have time, close-caption a few minutes of the video.  Email Aaron where you ended.
+
 
 % IDEAS:  try http://www.mathworks.com/help/vision/examples/motion-based-multiple-object-tracking.html
 %  also try   http://group.szbk.u-szeged.hu/sysbiol/horvath-peter-lab-overview.html
