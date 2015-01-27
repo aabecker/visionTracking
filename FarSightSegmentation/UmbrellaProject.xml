@@ -1,0 +1,8 @@
+<ProjectFiles path=".\" name="UmbrellaProject">
+    <input file="Umbrella.xml" />
+    <output file="Brian_ki67_label.xml" />
+    <log file="Umbrella_log.txt" validated="0" />
+    <definition file="UmbrellaDef.xml" />
+    <table file="Umbrella_table.txt" />
+    <adjTables file="Umbrella_adjTables.txt" />
+</ProjectFiles>

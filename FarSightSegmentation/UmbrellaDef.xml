@@ -1,0 +1,36 @@
+<ProjectDefinition name="Project CCRC">
+    <Inputs>
+        <channel number="0" name="nuc" type="NUCLEAR" />
+    </Inputs>
+    <Pipeline>
+        <step name="NUCLEAR_SEGMENTATION" />
+    </Pipeline>
+    <NuclearSegmentationParameters>
+        <parameter name="high_sensitivity" value="0.00" /> <!-- use 0, 1 detects gounrd-->
+        <parameter name="adaptive_binarization" value="0.00" /> <!-- use 0, 1 broke umbrellas into more parts-->
+        <parameter name="LoG_size" value="60.00" /> <!-- was 60 they say it isn't used -->
+        <parameter name="min_scale" value="15.00" /> <!-- was 10.  5 fragmented it more -->
+        <parameter name="max_scale" value="18.00" /> <!--was 20-->
+        <parameter name="xy_clustering_res" value="2.0" /> <!-- was 3.  Changing to 30 made more breaks.  Changing to 0.3 made nothing detectrd, 1 is more fragmented -->
+        <parameter name="z_clustering_res" value="2.00" />
+        <parameter name="finalize_segmentation" value="1.00" />
+        <parameter name="sampling_ratio_XY_to_Z" value="2.00" />
+        <parameter name="Use_Distance_Map" value="1.00" />
+        <parameter name="refinement_range" value="6.00" /> <!-- was 6,60 didn't change much, nor did 0.6-->
+        <parameter name="min_object_size" value="200.00" /> <!-- noise pixels are about 150 and less -->
+    </NuclearSegmentationParameters>
+</ProjectDefinition>
+<!--  // http://www.farsight-toolkit.org/wiki/Nuclear_Segmentation
+high_sensitivity: a boolean parameter used to enable(1)/disable(0) high sensitivity binarization. Default value is (0).
+LoG_size: Not used anymore and will be removed
+min_scale: the minimum scale of the Laplacian of Gaussian filter.
+max_scale: the maximum scale of the Laplacian of Gaussian filter.
+xy_clustering_res: resolution of the local maximum clustering (in the x-y plane) used in the initial binarization step
+z_clustering_res: resolution of the local maximum clustering (along z) used in the initial binarization step
+finalize_segmentation: a boolean parameter used to enable(1)/disable(0) the segmentation refinement step
+sampling_ratio_XY_to_Z: ratio of image sampling along Z to the sampling in X-Y
+Use_Distance_Map: a boolean parameter used to enable(1)/disable(0) the use of the distance constraint to select the LoG scales
+refinement_range: If segmentation finalization (refinement) is enabled, this parameter sets the maximum distance that an initial contour can be shifted
+-->
+
+<!-- we'd like to look for things that are circular -->
