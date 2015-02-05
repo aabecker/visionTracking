@@ -2,7 +2,7 @@ function determineUmbrellaColor
 % Yao Wei and Aaron T. Becker
 
 ImageOrigFile = 'Frame2color.tiff';
-ImageGreyFile = 'Frame2color.tiff';
+ImageGreyFile = 'Frame2grey.tiff';
 ImageDataFile = 'Frame2Data.xls';
 ImageOrig = imread(ImageOrigFile);
 ImageGrey = imread(ImageGreyFile);
@@ -16,8 +16,8 @@ image(ImageOrig)
 
 %2.) display segmented image (from farsight)
 subplot(1,2,2)
-image(imageFarsight)  % TODO: how to display the outlines?
-
+image(ImageOrig)  % TODO: how to display the outlines?
+%colormap(gray)
 %3.) read in the data file from farsight
 ImageDataFile = 'Frame2Data.txt';
 delimiter = '\t';
@@ -36,7 +36,8 @@ cy = ImageData{3};
 vol = ImageData{5};
 radii = (vol/pi).^.5;
 subplot(1,2,1)
-    viscircles([cx,cy],radii)
+viscircles([cx,cy],radii)
+title('Farsight Detections')
 
 
 
@@ -45,10 +46,82 @@ ImageHSV = rgb2hsv(ImageOrig);
 figure(2)
 subplot(1,2,1)
 hueVal = ImageHSV(:,:,1);
-image(ImageHSV)
+image(ImageOrig)
+title('original')
+colormap(gray)
 
 %7.) identify the average HUE of each umbrella
+ % instead, just use two for loops.  Calculate the HUE angle..
 
+cx = ImageData{2};
+cy = ImageData{3};
+vol = ImageData{5};
+radii = (vol/pi).^.5;
+colors = zeros(size(cx));
+hueAngle = hueVal*2*pi;
+hueSin = zeros(size(cx));
+hueCos = zeros(size(cx));
+sf = 0.8;
+
+meanGreen = 2.577; 
+meanRed = -0.4808;
+meanBlue = -2.094;
+meanPurple =-1.544;
+meanOrange =-0.05;
+meanColors = [meanGreen,meanRed,meanBlue,meanPurple,meanOrange];
+colorNames = ['g','r','b','m','y'];
+
+for i= 1:numel(cx)
+    n = 0;
+    rad2search = sf*radii(i);
+    for m = ceil(cy(i)-rad2search):floor(cy(i)+rad2search)
+        for k = ceil(cx(i)-rad2search):floor(cx(i)+rad2search)
+            if m<=size(hueAngle,1) && m>0 && k<=size(hueAngle,2) && k>0 ...
+                && (cy(i)-m)^2+(cx(i)-k)^2< sf*rad2search^2
+                n = n + 1;
+                deltaSin = sin(hueAngle(m,k)) - hueSin(i);
+                hueSin(i) = hueSin(i) + deltaSin/n;
+                deltaCos = cos(hueAngle(m,k)) - hueCos(i);
+                hueCos(i) = hueCos(i) + deltaCos/n;
+                %hueAngle(m,k) = 50;
+                
+               
+           end
+        end
+    end
+    hues(i) = atan2(hueSin(i),hueCos(i));
+    [~,colors(i)] = min(abs(meanColors - hues(i)));
+end
+
+
+subplot(1,2,2)
+
+image(ImageOrig)
+for i = 1:numel(cx) 
+    rectangle('Position',[cx(i)-radii(i),cy(i)-radii(i),2*radii(i),2*radii(i)],'Curvature',[1,1],'FaceColor',colorNames(colors(i)))
+end
+title('classified')
+%colormap(gray)
+
+
+%hues = atan2(hueSin,hueCos);
+
+
+
+figure(5)
+plot(sort(hues),'.')
+ylabel('hueAngle  (H*2*pi - pi)')
+xlabel('Umbrellas sorted by hue')
+for i = 1:numel(meanColors)
+h = line([1,numel(cx)],meanColors(i)*[1,1],'color',colorNames(i),'linewidth',2)
+uistack(h,'bottom')
+end
+
+
+
+%rectangle('Position',[1,2,5,10],'Curvature',[1,1],'FaceColor','r')
+ 
+ 
 % for i=1:numel(x)
 %     rad = floor(radii(i));
 %     
@@ -56,23 +129,23 @@ image(ImageHSV)
 %     imshow(C)
 %     meanGL = mean(grayImage(C))
 % end
-cc=1:size(ImageGrey,1); 
-rr=(1:size(ImageGrey,2))';
-
-
- 
-for i = 1:numel(cx)
-    cxV = cx(i);
-   cyV = cy(i);
-   rV = floor(radii(i));
-    
-    findCircleRegion=@(xx,yy) (xx-cxV).^2+(yy-cyV).^2 <= rV^2 ; 
-    
-    C=bsxfun(findCircleRegion,rr,cc); %Logical map of 2 circles
-    hueVal(C)
-end
-
-figure; imshow(C)
+% cc=1:size(ImageGrey,1); 
+% rr=(1:size(ImageGrey,2))';
+% 
+% 
+%  
+% for i = 1:numel(cx)
+%     cxV = cx(i);
+%    cyV = cy(i);
+%    rV = floor(radii(i));
+%     
+%     findCircleRegion=@(xx,yy) (xx-cxV).^2+(yy-cyV).^2 <= rV^2 ; 
+%     
+%     C=bsxfun(findCircleRegion,rr,cc); %Logical map of 2 circles
+%     hueVal(C)
+% end
+% 
+% figure; imshow(C)
 
 
 
