@@ -5,9 +5,9 @@ ImageOrigFile = 'Frame2color.tiff';
 ImageGreyFile = 'Frame2grey.tiff';
 ImageDataFile = 'Frame2Data.xls'; %#ok<NASGU>
 ImageOrig = imread(ImageOrigFile);
-ImageGrey = imread(ImageGreyFile); %#ok<NASGU>
+ImageGrey = imread(ImageGreyFile);
 imageFarsightFile = 'Frame2farsight.tiff';
-imageFarsight = imread(imageFarsightFile ); %#ok<NASGU>
+imageFarsight = imread(imageFarsightFile );
 %1.) display original image
 figure(1)
 
