@@ -176,7 +176,7 @@ function pointLocations = noMorePoints(~,evt)
                 end
         end
         if strcmpi(evt.Key,'c');
-            useBW = ~useBW;
+           useBW = ~useBW;
            loadFrame(vidBirdseye, frameNumber);
         end
         
