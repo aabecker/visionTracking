@@ -24,10 +24,10 @@
 function ManualTrackUmbrellas(frameNumber, framesToSkip)
 
 if nargin < 2
-    framesToSkip = 30;
+    framesToSkip = 23;
 end
 if nargin <1
-    frameNumber = 1;
+    frameNumber = 1932;
 end
 
 useBW = true;

@@ -1,0 +1,8 @@
+<ProjectFiles path="G:/farsightExe/FarSightSegmentation\" name="test1">
+    <input file="Brian_ki67_nuc.tif" />
+    <output file="Brian_ki67_nuc_label.xml" />
+    <log file="Brian_ki67_nuc_log.txt" validated="0" />
+    <definition file="BrianDef.xml" />
+    <table file="Brian_ki67_nuc_table.txt" />
+    <adjTables file="frame3_adjTables.txt" />
+</ProjectFiles>

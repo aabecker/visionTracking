@@ -1,0 +1,8 @@
+<ProjectFiles path="G:/farsightExe/FarSightSegmentation\" name="1">
+    <input file="frame0000001.tif" />
+    <output file="frame0000001_label.xml" />
+    <log file="frame0000001_log.txt" validated="0" />
+    <definition file="BrianDef.xml" />
+    <table file="frame0000001_table.txt" />
+    <adjTables file="frame0000001_adjTables.txt" />
+</ProjectFiles>

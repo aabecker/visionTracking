@@ -1,0 +1,8 @@
+<ProjectFiles path="D:/Data/AaronBecker\" name="UmbrellaProject">
+    <input file="Brian_ki67.xml" />
+    <output file="Brian_ki67_label.xml" />
+    <log file="Brian_ki67_log.txt" validated="0" />
+    <definition file="BrianDef.xml" />
+    <table file="Brian_ki67_table.txt" />
+    <adjTables file="Brian_ki67_adjTables.txt" />
+</ProjectFiles>
