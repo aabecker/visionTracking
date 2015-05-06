@@ -4,21 +4,22 @@
 %
 %  @brief  Loads frames from a movie, starting at frameNumber.  It then
 %  displays frame frameNumber.  If a textfile of x,y positions exists for a
-%  text file umbrelladata_##NUM##.csv, where ##NUM## <= frameNumber, it loads
+%  text file ##NUM##.mat, where ##NUM## <= frameNumber, it loads
 %  draggable markers and displays these at those xy positions.  The user
 %  then can drag exisiting markers onto the center of the umbrellas, delete
 %  by right clicking, and add new markers by left clicking.  The user
 %  presses <enter> to go to the next frame, which saves the current frame
-%  xy positions as, then loads frame frameNumber+framesToSkip
-%  as umbrelladata_frameNumber.csv
+%  xy positions as frameNumber.mat, then loads frame frameNumber+framesToSkip
 %
-%  @Date
+%  @Date May 6, 2015
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 
 % you need the movie (vidName) in the same directory as the code
 % you need a folder called 'manualPoints/' in the same directory as the
 % code
+% 'c' will switch between rgb images and a thresholded BW image
+% 'd' deletes all marked points (in case they are terrible)
 
 function ManualTrackUmbrellas(frameNumber, framesToSkip)
 
@@ -36,7 +37,7 @@ dataFileName = 'manualPoints/';
 titleString = 'Click to define object(s). Press <ENTER> to finish selection.';
 figure(1)
 imgax = gca;
-hTitle       = title(imgax,'Loading movie.  PLease wait');
+hTitle       = title(imgax,'Loading movie.  Please wait');
 imghandle = imhandles(imgca);
 parentfig = ancestor(imgax,'figure');
 set(imgax,'ButtonDownFcn','');
