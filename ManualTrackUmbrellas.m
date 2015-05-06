@@ -29,6 +29,8 @@ if nargin <1
     frameNumber = 1;
 end
 
+useBW = true;
+
 vidName = 'UP Birdseye Footage MIT Prores Smaller.mp4';
 dataFileName = 'manualPoints/';
 titleString = 'Click to define object(s). Press <ENTER> to finish selection.';
@@ -98,6 +100,7 @@ end
     end
 
     function [cdata, bw] = loadFrame(vidReader, frameNum)
+        tic %start a timer
         %loads video fream frameNum
         cdata = read(vidReader,frameNum); 
         % convert rgb to YCbCr color space
@@ -106,7 +109,11 @@ end
         % removes small blobs
         bw = bwareaopen(Ythreshim,400);
         %imshow(rgb)
-        imshow(bw)
+        if useBW
+            imshow(bw)
+        else
+            imshow(cdata)
+        end
         imgax = gca;
         imghandle = imhandles(imgca);
         parentfig = ancestor(imgax,'figure');
@@ -152,7 +159,7 @@ end
         imsz = size(get(imhandles(imgca),'CData')); %#ok<NASGU>
  
             save([dataFileName,num2str(frameNumber,'%07d')], 'pointLocations','imsz','frameNumber');
-            set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas'])
+            set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ])
    
     end
 
@@ -166,6 +173,10 @@ function pointLocations = noMorePoints(~,evt)
                 for ii = 1:numel(roi)
                     delete(roi(ii));
                 end
+        end
+        if strcmpi(evt.Key,'c');
+            useBW = ~useBW;
+           loadFrame(vidBirdseye, frameNumber);
         end
         
         
@@ -184,7 +195,7 @@ function pointLocations = noMorePoints(~,evt)
                 end
             
             
-            % TODO: load the next frame.  
+            %  load the next frame.  
             frameNumber = frameNumber+framesToSkip;
             [cdata, bw] = loadFrame(vidBirdseye, frameNumber);
             
