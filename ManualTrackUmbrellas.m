@@ -13,27 +13,27 @@
 %
 %  @Date May 6, 2015
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-
+%
 % you need the movie (vidName) in the same directory as the code
 % you need a folder called 'manualPoints/' in the same directory as the
 % code
 % 'c' will switch between rgb images and a thresholded BW image
 % 'd' deletes all marked points (in case they are terrible)
+% 'k' will run k-means algorithm, using the current points as seed values.
 
 function ManualTrackUmbrellas(frameNumber, framesToSkip)
 
 if nargin < 2
-    framesToSkip = 23;
+    framesToSkip = 23;  
 end
 if nargin <1
-    frameNumber = 1932;
+    frameNumber = 50; %1932;
 end
 
 useBW = true;
-
-vidName = 'UP Birdseye Footage MIT Prores Smaller.mp4';
-dataFileName = 'manualPoints/';
+vidName = 'First10Min.mp4';  %much shorter!
+%vidName = 'UP Birdseye Footage MIT Prores Smaller.mp4';
+dataFileName = 'manualPointsLowRes/';  %'manualPoints/';
 titleString = 'Click to define object(s). Press <ENTER> to finish selection.';
 figure(1)
 imgax = gca;
@@ -45,41 +45,35 @@ set(imghandle,'ButtonDownFcn',@placePoint);
 set(parentfig,'KeyPressFcn',  @noMorePoints);
 requestedvar = 'MarkedPoints';
 
-
-
 processVideo = true;
-
 if processVideo
-tic
-
-display(['Loading video: ',vidName]) %about 4 seconds
-vidBirdseye = VideoReader(vidName);
-toc
-nFrames = vidBirdseye.NumberOfFrames;
-[cdata, bw] = loadFrame(vidBirdseye, frameNumber);
+    tic  %record the start time
+    display(['Loading video: ',vidName]) %about 4 seconds
+    vidBirdseye = VideoReader(vidName);
+    toc %display how long it took to load.  My mac takes 4 seconds.  My PC takes 16s
+    %nFrames = vidBirdseye.NumberOfFrames;
+    [cdata, bw] = loadFrame(vidBirdseye, frameNumber);
 else
-    k=1;
+    k=1; %#ok<UNRCH>
     rgb = imread(['KeyFrames/frameRel',num2str(k,'%07d'),'.tiff']);
     
     % convert rgb to YCbCr color space
     YCBCR = rgb2ycbcr(rgb);
-        Ythresh = YCBCR(:,:,1)>32;
-        % removes small blobs
-        bw = bwareaopen(Ythresh,400);
-        imshow(bw)
+    Ythresh = YCBCR(:,:,1)>32;
+    % removes small blobs
+    bw = bwareaopen(Ythresh,400);
+    imshow(bw)
     
     %imshow(rgb)
 end
-
-
 
     function placePoint(varargin)
         point_loc = get(imgax,'CurrentPoint');
         point_loc = point_loc(1,1:2);
         impoint2(imgax,point_loc);
         
-          % save all the locations
-        pointLocations = saveFrame();
+        % save all the locations
+        saveFrame();
     end
 
     function roi = impoint2(varargin)
@@ -94,21 +88,19 @@ end
         
         function deleteROI(src,evt) %#ok
             delete(roi);
-            saveFrame();   
+            saveFrame();
         end
-        
-      
     end
 
     function [cdata, bw] = loadFrame(vidReader, frameNum)
         tic %start a timer
         %loads video fream frameNum
-        cdata = read(vidReader,frameNum); 
+        cdata = read(vidReader,frameNum);
         % convert rgb to YCbCr color space
         YCBCRim = rgb2ycbcr(cdata);
         Ythreshim = YCBCRim(:,:,1)>32;
         % removes small blobs
-        bw = bwareaopen(Ythreshim,400);
+        bw = bwareaopen(Ythreshim,100);  %for high resolution, use 400 px as threshold.
         %imshow(rgb)
         if useBW
             imshow(bw)
@@ -122,88 +114,121 @@ end
         set(imghandle,'ButtonDownFcn',@placePoint);
         set(parentfig,'KeyPressFcn',  @noMorePoints);
         requestedvar = 'MarkedPoints';
-
+        
         % TODO: Check if we we have any umbrella locations for this frame.  If so, delete markers and create new ones
         %impoint2(varargin)
-            
+        
         % try to load points from a data file.
-        s = dir([dataFileName,'*.mat']); % s is structure array with fields name, 
-                   % date, bytes, isdir
+        s = dir([dataFileName,'*.mat']); % s is structure array with fields name,
+        % date, bytes, isdir
         file_list = {s.name}'; % convert the name field from the elements
-                        % of the structure array into a cell array
-                        % of strings.
+        % of the structure array into a cell array
+        % of strings.
         umbrellasClicked = 0;
         if numel(file_list) > 0
             cm = cell2mat(file_list);
-            fileNums = str2num(cm(:,1:end-4));
-            indx = find(fileNums<=frameNumber,1,'last'); 
+            fileNums =  str2num(cm(:,1:end-4)); %#ok<ST2NM>  STR3DOUBLE causes failures
+            indx = find(fileNums<=frameNumber,1,'last');
             %
             data = load([dataFileName,num2str(fileNums(indx),'%07d')], 'pointLocations');
             
-             for i = 1:size(data.pointLocations,1)
+            for i = 1:size(data.pointLocations,1)
                 impoint2(imgax,data.pointLocations(i,:));
-             end 
-             umbrellasClicked = size(data.pointLocations,1);
+            end
+            umbrellasClicked = size(data.pointLocations,1);
         end
-        hTitle       = title(imgax,['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(umbrellasClicked),' umbrellas']);
+        hTitle = title(imgax,['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(umbrellasClicked),' umbrellas']);
     end
 
     function pointLocations = saveFrame()
-        roi = findall(imgax,'type','hggroup');
-                pointLocations = NaN(numel(roi),2);
-                for ii = 1:numel(roi)
-                    tmp = get(roi(ii),'children');
-                    pointLocations(ii,1) = get(tmp(1),'xdata');
-                    pointLocations(ii,2) = get(tmp(1),'ydata');
-                end
-                assignin('base',requestedvar,pointLocations);
+        pointLocations = getUmbrellaCenters(imgax);
+        assignin('base',requestedvar,pointLocations);
         imsz = size(get(imhandles(imgca),'CData')); %#ok<NASGU>
- 
-            save([dataFileName,num2str(frameNumber,'%07d')], 'pointLocations','imsz','frameNumber');
-            set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ])
-   
+        
+        save([dataFileName,num2str(frameNumber,'%07d')], 'pointLocations','imsz','frameNumber');
+        set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ]) 
     end
 
-function pointLocations = noMorePoints(~,evt)
+    function kMeansActual = kmeansAlgorithm( kMeanEstimates, data)
+       % YAO WEI -- put your code here!
+
+       % this code is not good.  You must change it:
+       kMeansActual = kMeanEstimates - 5;  %adds 5 to the x and y coordinate of each mean.  This is NOT the right answer
+    end
+
+    function pointLocations = getUmbrellaCenters(imgax)
+        roi = findall(imgax,'type','hggroup');
+        pointLocations = NaN(numel(roi),2);
+        for ii = 1:numel(roi)
+            tmp = get(roi(ii),'children');
+            pointLocations(ii,1) = get(tmp(1),'xdata');
+            pointLocations(ii,2) = get(tmp(1),'ydata');
+        end
+    end
+
+    function deleteUmbrellaCenters(imgax)
+         roi = findall(imgax,'type','hggroup');
+            for ii = 1:numel(roi)
+                delete(roi(ii));
+            end
+    end
+
+    function pointLocations = noMorePoints(~,evt)
         finished  = strcmpi(evt.Key,'return');
         pointLocations = [];
-        %TODO:  'c' to display bw or color images
-        %       'd' to delete all markers
+        %press 'c' to display bw or color images
+        %      'd' to delete all markers
+        %      'k' to run k-means
         if strcmpi(evt.Key,'d');
-            roi = findall(imgax,'type','hggroup');
-                for ii = 1:numel(roi)
-                    delete(roi(ii));
-                end
+            deleteUmbrellaCenters(imgax);
         end
         if strcmpi(evt.Key,'c');
-           useBW = ~useBW;
-           loadFrame(vidBirdseye, frameNumber);
+            useBW = ~useBW;
+
+%             if useBW
+%                 imshow(bw)
+%             else
+%                 imshow(cdata)
+%             end
+
+[cdata, bw] = loadFrame(vidBirdseye, frameNumber);
+            
         end
-        
-        
+        if strcmpi(evt.Key,'k');
+            %call k-means, but first gather the needed data:
+                kMeanEstimates = getUmbrellaCenters(imgax);
+                [xcoord,ycoord] = ind2sub( size(bw), find(bw>0));
+                nonBackgroundPx = [xcoord,ycoord];
+                %kMeanEstimates are the xy pairs, one for each umbrella
+                %data is every pixel that is not background.
+                % YAO WEI -- put your code here!
+                kMeansActual = kmeansAlgorithm( kMeanEstimates, nonBackgroundPx);
+                % update the location of every mean value.
+                
+                deleteUmbrellaCenters(imgax)
+            
+                for i = 1:size(kMeansActual,1)
+                    impoint2(imgax,kMeansActual(i,:));
+                end          
+        end
+
         if finished
             % Delete title, reset original functionality
             %delete(findall(parentfig,'tag','markImagePoints'));
-
             set(imghandle,'ButtonDownFcn','');
             set(parentfig,'KeyPressFcn','');
-                pointLocations = saveFrame();
-      
+            pointLocations = saveFrame();
+            
             % delete current markers.
-             roi = findall(imgax,'type','hggroup');
-                for ii = 1:numel(roi)
-                    delete(roi(ii));
-                end
-            
-            
-            %  load the next frame.  
+            roi = findall(imgax,'type','hggroup');
+            for ii = 1:numel(roi)
+                delete(roi(ii));
+            end
+
+            %  load the next frame.
             frameNumber = frameNumber+framesToSkip;
             [cdata, bw] = loadFrame(vidBirdseye, frameNumber); 
-            
         end
-        
     end
-
-
 end
 
