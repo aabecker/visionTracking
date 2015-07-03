@@ -24,7 +24,7 @@
 function ManualTrackUmbrellas(frameNumber, framesToSkip)
 
 if nargin < 2
-    framesToSkip = 23;  
+    framesToSkip = 23;
 end
 if nargin <1
     frameNumber = 50; %1932;
@@ -63,7 +63,6 @@ else
     % removes small blobs
     bw = bwareaopen(Ythresh,400);
     imshow(bw)
-    
     %imshow(rgb)
 end
 
@@ -146,14 +145,14 @@ end
         imsz = size(get(imhandles(imgca),'CData')); %#ok<NASGU>
         
         save([dataFileName,num2str(frameNumber,'%07d')], 'pointLocations','imsz','frameNumber');
-        set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ]) 
+        set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ])
     end
 
     function kMeansActual = kmeansAlgorithm( kMeanEstimates, data)
-       % YAO WEI -- put your code here!
-
-       % this code is not good.  You must change it:
-       kMeansActual = kMeanEstimates - 5;  %adds 5 to the x and y coordinate of each mean.  This is NOT the right answer
+        % YAO WEI -- put your code here!
+        
+        % this code is not good.  You must change it:
+        kMeansActual = kMeanEstimates - 5;  %adds 5 to the x and y coordinate of each mean.  This is NOT the right answer
     end
 
     function pointLocations = getUmbrellaCenters(imgax)
@@ -167,10 +166,10 @@ end
     end
 
     function deleteUmbrellaCenters(imgax)
-         roi = findall(imgax,'type','hggroup');
-            for ii = 1:numel(roi)
-                delete(roi(ii));
-            end
+        roi = findall(imgax,'type','hggroup');
+        for ii = 1:numel(roi)
+            delete(roi(ii));
+        end
     end
 
     function pointLocations = noMorePoints(~,evt)
@@ -184,34 +183,27 @@ end
         end
         if strcmpi(evt.Key,'c');
             useBW = ~useBW;
-
-%             if useBW
-%                 imshow(bw)
-%             else
-%                 imshow(cdata)
-%             end
-
-[cdata, bw] = loadFrame(vidBirdseye, frameNumber);
+            [cdata, bw] = loadFrame(vidBirdseye, frameNumber);
             
         end
         if strcmpi(evt.Key,'k');
             %call k-means, but first gather the needed data:
-                kMeanEstimates = getUmbrellaCenters(imgax);
-                [xcoord,ycoord] = ind2sub( size(bw), find(bw>0));
-                nonBackgroundPx = [xcoord,ycoord];
-                %kMeanEstimates are the xy pairs, one for each umbrella
-                %data is every pixel that is not background.
-                % YAO WEI -- put your code here!
-                kMeansActual = kmeansAlgorithm( kMeanEstimates, nonBackgroundPx);
-                % update the location of every mean value.
-                
-                deleteUmbrellaCenters(imgax)
+            kMeanEstimates = getUmbrellaCenters(imgax);
+            [xcoord,ycoord] = ind2sub( size(bw), find(bw>0));
+            nonBackgroundPx = [xcoord,ycoord];
+            %kMeanEstimates are the xy pairs, one for each umbrella
+            %data is every pixel that is not background.
+            % YAO WEI -- put your code here!
+            kMeansActual = kmeansAlgorithm( kMeanEstimates, nonBackgroundPx);
+            % update the location of every mean value.
             
-                for i = 1:size(kMeansActual,1)
-                    impoint2(imgax,kMeansActual(i,:));
-                end          
+            deleteUmbrellaCenters(imgax)
+            
+            for i = 1:size(kMeansActual,1)
+                impoint2(imgax,kMeansActual(i,:));
+            end
         end
-
+        
         if finished
             % Delete title, reset original functionality
             %delete(findall(parentfig,'tag','markImagePoints'));
@@ -224,10 +216,10 @@ end
             for ii = 1:numel(roi)
                 delete(roi(ii));
             end
-
+            
             %  load the next frame.
             frameNumber = frameNumber+framesToSkip;
-            [cdata, bw] = loadFrame(vidBirdseye, frameNumber); 
+            [cdata, bw] = loadFrame(vidBirdseye, frameNumber);
         end
     end
 end
