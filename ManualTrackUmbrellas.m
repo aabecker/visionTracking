@@ -198,9 +198,7 @@ function pointLocations = noMorePoints(~,evt)
             
             %  load the next frame.  
             frameNumber = frameNumber+framesToSkip;
-            [cdata, bw] = loadFrame(vidBirdseye, frameNumber);
-            
-          
+            [cdata, bw] = loadFrame(vidBirdseye, frameNumber); 
             
         end
         
