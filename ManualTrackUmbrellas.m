@@ -159,7 +159,7 @@ seeds = kMeanEstimates;
 old_seeds = seeds;
 new_seeds = seeds;
 %cost = zeros(1,1000);
-iter = 1;
+iter = 200;
 while(1)
     distance = zeros(num,k);
     tempx = zeros(num,k);
@@ -214,7 +214,7 @@ while(1)
 %     original_cost(iter) = sum(original_cost_distance);
     
     
-    if(iter>=2)
+    if(iter>=200)
         break;
     %elseif (cost(iter))
     elseif (norm(new_seeds - old_seeds) <1e-3)
@@ -279,6 +279,7 @@ end
             %kMeanEstimates are the xy pairs, one for each umbrella
             %data is every pixel that is not background.
             % YAO WEI -- put your code here!
+            nonBackgroundPx = [nonBackgroundPx(:,2) nonBackgroundPx(:,1)];
             kMeansActual = kmeansAlgorithm( kMeanEstimates, nonBackgroundPx);
             % update the location of every mean value.
             
