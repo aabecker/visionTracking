@@ -161,9 +161,9 @@ new_seeds = seeds;
 %cost = zeros(1,1000);
 iter = 1;
 while(1)
-    distance = zeros(k,k);
-    tempx = zeros(k,k);
-    tempy = zeros(k,k);
+    distance = zeros(num,k);
+    tempx = zeros(num,k);
+    tempy = zeros(num,k);
     tempx = repmat(data(:,1),1,k) - repmat(old_seeds(:,1).',num,1);
     tempy = repmat(data(:,2),1,k) - repmat(old_seeds(:,2).',num,1);
     distance = (tempx.^2 + tempy.^2);   
