@@ -21,13 +21,22 @@
 % 'd' deletes all marked points (in case they are terrible)
 % 'k' will run k-means algorithm, using the current points as seed values.
 
-function ManualTrackUmbrellas(frameNumber, framesToSkip)
+%TODO: indicate on title when we are running k-means
+% why do 2 figure pop up? remove one
+% make it faster  ( click on 'run and time')
+% indicate on the title when k-means is running (or turn mouse into
+% hourglass)
+%
+%  Separeate code: we need to identify the color --(use Aaron's code, but
+%  use k-means to figure out which pixels belong to the umbrella, and then 
 
+function ManualTrackUmbrellas(frameNumber, framesToSkip)
+format compact
 if nargin < 2
     framesToSkip = 23;
 end
 if nargin <1
-    frameNumber = 50; %1932;
+    frameNumber = 1000; %1932;
 end
 
 useBW = true;
@@ -137,6 +146,7 @@ end
             umbrellasClicked = size(data.pointLocations,1);
         end
         hTitle = title(imgax,['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(umbrellasClicked),' umbrellas']);
+        set(gcf,'units','normalized','outerposition',[0 0 1 1])
     end
 
     function pointLocations = saveFrame()
@@ -148,97 +158,39 @@ end
         set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ])
     end
 
-    function kMeansActual = kmeansAlgorithm( kMeanEstimates, data)
-        % YAO WEI -- put your code here!
+    function kMeanEstimates = kmeansAlgorithm( kMeanEstimates, data)
+        iter = 1;
+        maxCost=10^20;
         
-        [k,m] = size(kMeanEstimates)
-        num = size(data,1)
-seeds_index = 1:k;
-seeds = kMeanEstimates;
+        num = size(data,1);
+        while(1)
+            k = size(kMeanEstimates,1);
+            new_seeds = kMeanEstimates;
 
-old_seeds = seeds;
-new_seeds = seeds;
-%cost = zeros(1,1000);
-iter = 200;
-while(1)
-    distance = zeros(num,k);
-    tempx = zeros(num,k);
-    tempy = zeros(num,k);
-    tempx = repmat(data(:,1),1,k) - repmat(old_seeds(:,1).',num,1);
-    tempy = repmat(data(:,2),1,k) - repmat(old_seeds(:,2).',num,1);
-    distance = (tempx.^2 + tempy.^2);   
-    
-    [min_dis,cluster_index] = min(distance.');
-    
- %   if(k == 1)
-%         
-%             cluster.seed = [seeds_index, seeds];
-%             cluster.data = [data_normalized(:,1) data_normalized(:,2)];
-%             cluster.data_index = [1:num].';
-%             cluster.sum_min_dis = sum(distance); 
-%             cluster.mean_center = mean(cluster.data);
-%             new_seeds = cluster.mean_center;
-%             cost(iter) = cluster.sum_min_dis;
-%    else
-        for ii = 1:k
-            j = find(cluster_index == ii).';
-            cluster(ii).seed = [seeds_index(ii), seeds(ii,:)];
-            cluster(ii).data = [data(j,1) data(j,2)];
-            cluster(ii).data_index = j;
-            cluster(ii).sum_min_dis = sum(min_dis(j).'); 
-            cluster(ii).mean_center = mean(cluster(ii).data);
-            new_seeds(ii,:) = cluster(ii).mean_center;
-           
-            cost_distance(ii) = cluster(ii).sum_min_dis;
- %       end
-        cost(iter) = sum(cost_distance);
-        
-       
-        
+            tempx = repmat(data(:,1),1,k) - repmat(kMeanEstimates(:,1).',num,1);
+            tempy = repmat(data(:,2),1,k) - repmat(kMeanEstimates(:,2).',num,1);
+            distance = (tempx.^2 + tempy.^2);
+            [min_dis,cluster_index] = min(distance.');
+            
+            for ii = 1:k
+                j = find(cluster_index == ii).';
+                new_seeds(ii,:) = mean([data(j,1) data(j,2)]);
+            end
+            totalDis = sum(min_dis);
+            
+            new_seeds = new_seeds(~any(isnan(new_seeds),2),:); %remove NaN
+            kMeanEstimates = new_seeds;
+            iter = iter + 1;
+            display([num2str(iter),'.), total Dist =',num2str(totalDis), ' max cost=',num2str(maxCost)])
+            
+            if(iter>=5)
+                break;
+            %elseif totalDis == maxCost 
+               % break;
+            end
+            maxCost = totalDis; 
         end
-    kMeansActual = new_seeds;
-        %display('calculating');
-   
-    
-    
-
-    
-%     for index = 1:k
-%         mean_center = cluster(index).mean_center;
-%         original_mean = mean_center .* faithfulStd + faithfulMean;
-%         data_index = cluster(index).data_index; 
-%         diff = data(data_index,:) - repmat(original_mean,length(data_index),1);
-%         cluster(index).original_distance = sum(diff(:,1).^2 + diff(:,2).^2);
-%         original_cost_distance(index) = cluster(index).original_distance;
-%     end
-%     original_cost(iter) = sum(original_cost_distance);
-    
-    
-    if(iter>=200)
-        break;
-    %elseif (cost(iter))
-    elseif (norm(new_seeds - old_seeds) <1e-3)
-    %display('done');
-    %plot(cost);
-     %hold on
-        break; 
-    else
-        old_seeds = new_seeds;
-        iter = iter + 1;
-    end
 end
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        % this code is not good.  You must change it:
-        %kMeansActual = kMeanEstimates - 5;  %adds 5 to the x and y coordinate of each mean.  This is NOT the right answer
-    end
 
     function pointLocations = getUmbrellaCenters(imgax)
         roi = findall(imgax,'type','hggroup');
@@ -268,7 +220,7 @@ end
         end
         if strcmpi(evt.Key,'c');
             useBW = ~useBW;
-            [cdata, bw] = loadFrame(vidBirdseye, frameNumber);
+            [cdata, bw] = loadFrame(vidBirdseye, frameNumber); %#ok<SETNU>
             
         end
         if strcmpi(evt.Key,'k');
