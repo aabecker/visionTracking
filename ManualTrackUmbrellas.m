@@ -28,26 +28,26 @@
 % hourglass)
 %
 %  Separeate code: we need to identify the color --(use Aaron's code, but
-%  use k-means to figure out which pixels belong to the umbrella, and then 
+%  use k-means to figure out which pixels belong to the umbrella, and then
 
 function ManualTrackUmbrellas(frameNumber, framesToSkip)
 format compact
 if nargin < 2
-    framesToSkip = 23;
+    framesToSkip = 15;
 end
 if nargin <1
-    frameNumber = 1000; %1932;
+    frameNumber = 2400; %1932;
 end
 
 useBW = true;
-vidName = 'First10Min.mp4';  %much shorter!
+vidName = 'First10Min.mp4';  %much shorter!  Is 30 fps.  I want high resolutio0n data from 1:20 to 2:20.  (frame 2400 to 4200)
 %vidName = 'UP Birdseye Footage MIT Prores Smaller.mp4';
 dataFileName = 'manualPointsLowRes/';  %'manualPoints/';
 titleString = 'Click to define object(s). Press <ENTER> to finish selection.';
 figure(1)
 imgax = gca;
-hTitle       = title(imgax,'Loading movie.  Please wait');
-imghandle = imhandles(imgca);
+hTitle    = title(imgax,'Loading movie.  Please wait');
+imghandle = imhandles(imgax);
 parentfig = ancestor(imgax,'figure');
 set(imgax,'ButtonDownFcn','');
 set(imghandle,'ButtonDownFcn',@placePoint);
@@ -60,7 +60,8 @@ if processVideo
     display(['Loading video: ',vidName]) %about 4 seconds
     vidBirdseye = VideoReader(vidName);
     toc %display how long it took to load.  My mac takes 4 seconds.  My PC takes 16s
-    %nFrames = vidBirdseye.NumberOfFrames;
+    nFrames = vidBirdseye.NumberOfFrames;
+    display(['Total Frames = ',num2str(nFrames)])  %10*60+4
     [cdata, bw] = loadFrame(vidBirdseye, frameNumber);
 else
     k=1; %#ok<UNRCH>
@@ -87,6 +88,9 @@ end
     function roi = impoint2(varargin)
         % impoint2: improved impoint object
         roi      = impoint(varargin{:});
+        if ~useBW
+        setColor(roi,'y')
+        end
         % Add a context menu for adding points
         l        = findobj(roi,'type','hggroup');
         uic      = unique( get(l,'UIContextMenu') );
@@ -109,6 +113,7 @@ end
         Ythreshim = YCBCRim(:,:,1)>32;
         % removes small blobs
         bw = bwareaopen(Ythreshim,100);  %for high resolution, use 400 px as threshold.
+        
         %imshow(rgb)
         if useBW
             imshow(bw)
@@ -116,7 +121,7 @@ end
             imshow(cdata)
         end
         imgax = gca;
-        imghandle = imhandles(imgca);
+        imghandle = imhandles(imgax);
         parentfig = ancestor(imgax,'figure');
         set(imgax,'ButtonDownFcn','');
         set(imghandle,'ButtonDownFcn',@placePoint);
@@ -159,38 +164,37 @@ end
     end
 
     function kMeanEstimates = kmeansAlgorithm( kMeanEstimates, data)
-        iter = 1;
         maxCost=10^20;
         
         num = size(data,1);
-        while(1)
+        for iter = 1:5 % how many iterations of k-means?  5 seems to be enough
+            
             k = size(kMeanEstimates,1);
             new_seeds = kMeanEstimates;
-
+            set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(k),' umbrellas ', num2str(toc,'%.1f'), ' iter: ',num2str(iter) ])
+            drawnow
+            
             tempx = repmat(data(:,1),1,k) - repmat(kMeanEstimates(:,1).',num,1);
             tempy = repmat(data(:,2),1,k) - repmat(kMeanEstimates(:,2).',num,1);
             distance = (tempx.^2 + tempy.^2);
             [min_dis,cluster_index] = min(distance.');
             
             for ii = 1:k
-                j = find(cluster_index == ii).';
-                new_seeds(ii,:) = mean([data(j,1) data(j,2)]);
+                new_seeds(ii,:) = mean(data(cluster_index == ii,:));
             end
             totalDis = sum(min_dis);
             
             new_seeds = new_seeds(~any(isnan(new_seeds),2),:); %remove NaN
             kMeanEstimates = new_seeds;
-            iter = iter + 1;
             display([num2str(iter),'.), total Dist =',num2str(totalDis), ' max cost=',num2str(maxCost)])
             
-            if(iter>=5)
+            if totalDis == maxCost
                 break;
-            %elseif totalDis == maxCost 
-               % break;
             end
-            maxCost = totalDis; 
+            maxCost = totalDis;
         end
-end
+        set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(k),' umbrellas ', num2str(toc,'%.1f'), ' k-means finished']);
+    end
 
     function pointLocations = getUmbrellaCenters(imgax)
         roi = findall(imgax,'type','hggroup');
@@ -230,11 +234,9 @@ end
             nonBackgroundPx = [xcoord,ycoord];
             %kMeanEstimates are the xy pairs, one for each umbrella
             %data is every pixel that is not background.
-            % YAO WEI -- put your code here!
             nonBackgroundPx = [nonBackgroundPx(:,2) nonBackgroundPx(:,1)];
             kMeansActual = kmeansAlgorithm( kMeanEstimates, nonBackgroundPx);
             % update the location of every mean value.
-            
             deleteUmbrellaCenters(imgax)
             
             for i = 1:size(kMeansActual,1)
