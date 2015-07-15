@@ -62,7 +62,7 @@ if processVideo
     toc %display how long it took to load.  My mac takes 4 seconds.  My PC takes 16s
     nFrames = vidBirdseye.NumberOfFrames;
     display(['Total Frames = ',num2str(nFrames)])  %10*60+4
-    [cdata, bw] = loadFrame(vidBirdseye, frameNumber);
+    [cdata, bw, himage] = loadFrame(vidBirdseye, frameNumber,1);
 else
     k=1; %#ok<UNRCH>
     rgb = imread(['KeyFrames/frameRel',num2str(k,'%07d'),'.tiff']);
@@ -80,7 +80,6 @@ end
         point_loc = get(imgax,'CurrentPoint');
         point_loc = point_loc(1,1:2);
         impoint2(imgax,point_loc);
-        
         % save all the locations
         saveFrame();
     end
@@ -89,7 +88,7 @@ end
         % impoint2: improved impoint object
         roi      = impoint(varargin{:});
         if ~useBW
-        setColor(roi,'y')
+            setColor(roi,'y')
         end
         % Add a context menu for adding points
         l        = findobj(roi,'type','hggroup');
@@ -104,7 +103,7 @@ end
         end
     end
 
-    function [cdata, bw] = loadFrame(vidReader, frameNum)
+    function [cdata, bw,himage] = loadFrame(vidReader, frameNum, firstTime,himage)
         tic %start a timer
         %loads video fream frameNum
         cdata = read(vidReader,frameNum);
@@ -114,19 +113,29 @@ end
         % removes small blobs
         bw = bwareaopen(Ythreshim,100);  %for high resolution, use 400 px as threshold.
         
-        %imshow(rgb)
-        if useBW
-            imshow(bw)
+        
+        if firstTime==1
+            %generate the image
+            if useBW
+                himage = imshow(bw);
+            else
+                himage = imshow(cdata);
+            end
         else
-            imshow(cdata)
+            set(himage,'Cdata',bw)
+            if useBW
+                set(himage,'Cdata',bw)
+            else
+                set(himage,'Cdata',cdata)
+            end
         end
-        imgax = gca;
-        imghandle = imhandles(imgax);
-        parentfig = ancestor(imgax,'figure');
-        set(imgax,'ButtonDownFcn','');
-        set(imghandle,'ButtonDownFcn',@placePoint);
-        set(parentfig,'KeyPressFcn',  @noMorePoints);
-        requestedvar = 'MarkedPoints';
+                    imgax = gca;
+            imghandle = imhandles(imgax);
+            parentfig = ancestor(imgax,'figure');
+            set(imgax,'ButtonDownFcn','');
+            set(imghandle,'ButtonDownFcn',@placePoint);
+            set(parentfig,'KeyPressFcn',  @noMorePoints);
+            requestedvar = 'MarkedPoints';
         
         % TODO: Check if we we have any umbrella locations for this frame.  If so, delete markers and create new ones
         %impoint2(varargin)
@@ -158,7 +167,6 @@ end
         pointLocations = getUmbrellaCenters(imgax);
         assignin('base',requestedvar,pointLocations);
         imsz = size(get(imhandles(imgca),'CData')); %#ok<NASGU>
-        
         save([dataFileName,num2str(frameNumber,'%07d')], 'pointLocations','imsz','frameNumber');
         set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ])
     end
@@ -167,7 +175,7 @@ end
         maxCost=10^20;
         
         num = size(data,1);
-        for iter = 1:5 % how many iterations of k-means?  5 seems to be enough
+        for iter = 1:3 % how many iterations of k-means?  5 seems to be enough
             
             k = size(kMeanEstimates,1);
             new_seeds = kMeanEstimates;
@@ -219,13 +227,30 @@ end
         %press 'c' to display bw or color images
         %      'd' to delete all markers
         %      'k' to run k-means
+        %      'r' to reload previous markers
         if strcmpi(evt.Key,'d');
             deleteUmbrellaCenters(imgax);
         end
+        if strcmpi(evt.Key,'r');
+            [cdata, bw,himage] = loadFrame(vidBirdseye, frameNumber,2,himage);
+        end
         if strcmpi(evt.Key,'c');
             useBW = ~useBW;
-            [cdata, bw] = loadFrame(vidBirdseye, frameNumber); %#ok<SETNU>
-            
+            color = 'b';
+            if useBW
+                set(himage,'Cdata',bw)
+            else
+                set(himage,'Cdata',cdata)
+                color = 'y';
+            end
+            roi = findall(imgax,'type','hggroup');
+            for ii = 1:numel(roi)
+                tmp = get(roi(ii),'children');
+                set(tmp(1),'color',color)
+                set(tmp(2),'MarkerFaceColor',color)
+                set(tmp(2),'MarkerEdgeColor',color)
+            end
+            %[cdata, bw,himage] = loadFrame(vidBirdseye, frameNumber,2,himage); %#ok<SETNU>
         end
         if strcmpi(evt.Key,'k');
             %call k-means, but first gather the needed data:
@@ -245,6 +270,8 @@ end
         end
         
         if finished
+            set( hTitle, 'String', ['SAVING Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ])
+            drawnow
             % Delete title, reset original functionality
             %delete(findall(parentfig,'tag','markImagePoints'));
             set(imghandle,'ButtonDownFcn','');
@@ -259,7 +286,7 @@ end
             
             %  load the next frame.
             frameNumber = frameNumber+framesToSkip;
-            [cdata, bw] = loadFrame(vidBirdseye, frameNumber);
+            [cdata, bw,himage] = loadFrame(vidBirdseye, frameNumber,2,himage);
         end
     end
 end
