@@ -36,7 +36,9 @@ if nargin < 2
     framesToSkip = 15;
 end
 if nargin <1
-    frameNumber = 2400; %1932;
+    frameNumber = 3300; %1932;  TO change this, type: save('lastFrame.mat', 'frameNumber');
+    load('lastFrame.mat', 'frameNumber'); %loads the last saved frame
+    
 end
 
 useBW = true;
@@ -111,6 +113,9 @@ end
         YCBCRim = rgb2ycbcr(cdata);
         Ythreshim = YCBCRim(:,:,1)>32;
         % removes small blobs
+%         figure(3)
+%         imshow(Ythreshim)
+        figure(1)
         bw = bwareaopen(Ythreshim,100);  %for high resolution, use 400 px as threshold.
         
         
@@ -164,11 +169,14 @@ end
     end
 
     function pointLocations = saveFrame()
+        
+        save('lastFrame.mat', 'frameNumber');
         pointLocations = getUmbrellaCenters(imgax);
         assignin('base',requestedvar,pointLocations);
         imsz = size(get(imhandles(imgca),'CData')); %#ok<NASGU>
         save([dataFileName,num2str(frameNumber,'%07d')], 'pointLocations','imsz','frameNumber');
         set( hTitle, 'String', ['Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ])
+        display(['Saving Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ]);
     end
 
     function kMeanEstimates = kmeansAlgorithm( kMeanEstimates, data)
