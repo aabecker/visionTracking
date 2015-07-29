@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-%  @Author Wei Yao & Aaron Becker
+%  @Author Wei Yao & Aaron T. Becker
 %
 %  @brief  Loads frames from a movie, starting at frameNumber.  It then
 %  displays frame frameNumber.  If a textfile of x,y positions exists for a
@@ -38,7 +38,6 @@ end
 if nargin <1
     frameNumber = 3300; %1932;  TO change this, type: save('lastFrame.mat', 'frameNumber');
     load('lastFrame.mat', 'frameNumber'); %loads the last saved frame
-    
 end
 
 useBW = true;
