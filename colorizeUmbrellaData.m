@@ -33,6 +33,15 @@ meanCyan = -2.50; %MAYBE BIGGER
 meanColors = [meanGreen,meanGreen2,meanRed,meanBlue,meanPurple,meanOrange,meanCyan];
 colorNames = ['g','g','r','b','m','y','c','k'];
 
+% setup instructions (call this at the beginning)
+
+ MOVIE_NAME = 'ProcessedUmbrella';
+    G.fig = figure(1);
+    clf
+    set(G.fig,'Units','normalized','outerposition',[0 0 1 1],'NumberTitle','off','MenuBar','none','color','w');
+    writerObj = VideoWriter(MOVIE_NAME,'MPEG-4');%http://www.mathworks.com/help/matlab/ref/videowriterclass.html
+    set(writerObj,'Quality',100);
+    open(writerObj);
 
 
 % 1. get list of files that have data
@@ -44,6 +53,9 @@ tic  %record the start time
 display(['Loading video: ',vidName]) %about 4 seconds
 vidBirdseye = VideoReader(vidName);
 toc %display how long it took to load.  My mac takes 4 seconds.  My PC takes 16s
+
+colorcount = NaN(numel(filenames),numel(colorNames));
+frameNums = NaN(numel(filenames),1);
 
 % 2. for each data file:
 for i = 1:numel(filenames)
@@ -71,20 +83,52 @@ for i = 1:numel(filenames)
     
     
     % 7. save the data [x,y,color, num pixels]
-    imsz = size(cdata);
-    save([dataFileName,'Hue',num2str(frameNumber,'%07d')], 'xy','aveHue','numPixels','colors','imsz','frameNumber');
+    imsz = size(cdata); %#ok<NASGU>
+    save([dataFileName,'/Hue/Hue',num2str(frameNumber,'%07d')], 'xy','aveHue','numPixels','colors','imsz','frameNumber');
     % 8. save the image (to make a movie?)
+    
+    indx = numPixels>5; %remove empty ones.
+    colorcount(i,:) = sum( bsxfun(@eq, colors(indx),1:numel(colorNames)) );
+    colorcount(i,2) = colorcount(i,1)+colorcount(i,2);
+    frameNums(i) = frameNumber;
     
     %display the image
     figure(1)
-    subplot(2,1,1)
+    subplot(2,2,1)
     imshow(cdata)
-    title(num2str(frameNumber))
-    subplot(2,1,2)
+    %title(num2str(frameNumber))
+    subplot(2,2,2)
     imshow(imageClassified)
+    subplot(2,2,3:4)
+    set(gca,'FontSize',16)
+    for ik = 2:numel(colorNames);
+        plot(frameNums(1:i),colorcount(1:i,ik),'color',colorNames(ik),'linewidth',2);
+        hold on
+    end
+    hold off
+    title('umbrella colors')
+    xlabel(['frame ', num2str(frameNumber)])
+    ylabel('count of each color')
+    makeMovie()
     drawnow
 end
+close(writerObj);
+title('FINISHED')
 
+
+
+    function makeMovie()
+           % (for each frame)
+       
+            figure(G.fig)
+            set(gcf,'renderer','painters')   %optional line to remove antialiasing 
+            tfig = myaa;   %optional line 2
+          
+            F = getframe(tfig);
+            writeVideo(writerObj,F.cdata);
+            close(tfig)
+    end
+            
     function rgbC = getRGBfromName(charN)
         rgbC = bitget(find('krgybmcw'==charN)-1,1:3);
     end
@@ -92,7 +136,10 @@ end
         % xy is the locations of the center of each umbrella
         % data is the xy locations of the non-background pixels.
         % cdata is the color image r*c*3
-        %find the pixels associated to each kMeanEstimate
+        %find the pixels associated to each xy location
+        % returns the average hue 'aveHue' for each xy location, numPixels: the number of
+        % associated pixels, the classified 'colors', and an rgb image 'imageClassified' with
+        % all the classified objects recolored.
         
         %convert the image to HSV
         ImageHSV = rgb2hsv(cdata);
@@ -105,6 +152,7 @@ end
         
         k = size(xy,1);
         aveHue = zeros(k,1);
+        aveVal = zeros(k,1);
         numPixels = zeros(k,1);
         colors = zeros(k,1);
         
@@ -119,7 +167,7 @@ end
             hueSin = sum(sin(hueAngle(linearInd)));
             hueCos = sum(cos(hueAngle(linearInd)));
             aveHue(ii) = atan2(hueSin,hueCos);
-           aveVal(ii) = mean(imVAL(linearInd));
+            aveVal(ii) = mean(imVAL(linearInd));
             % count number of pixels associated with this mean
             numPixels(ii) = numel(thisUmbrellaxy(:,1));
             % classify the color
@@ -133,6 +181,7 @@ end
             end
         end
         figure(2)
+        %for debugging:
         imshow(imageClassified)
         for ii = 1:k
             text(xy(ii,1), xy(ii,2),num2str(aveHue(ii),'%.2f'),'color','w')

@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
+% check ManualTrackUmbrellas(4065,15) .  What happened?
 %  @Author Wei Yao & Aaron T. Becker
 %
 %  @brief  Loads frames from a movie, starting at frameNumber.  It then
@@ -40,7 +40,7 @@ if nargin <1
     load('lastFrame.mat', 'frameNumber'); %loads the last saved frame
 end
 
-useBW = true;
+useBW = false;
 vidName = 'First10Min.mp4';  %much shorter!  Is 30 fps.  I want high resolutio0n data from 1:20 to 2:20.  (frame 2400 to 4200)
 %vidName = 'UP Birdseye Footage MIT Prores Smaller.mp4';
 dataFileName = 'manualPointsLowRes/';  %'manualPoints/';
@@ -112,8 +112,8 @@ end
         YCBCRim = rgb2ycbcr(cdata);
         Ythreshim = YCBCRim(:,:,1)>32;
         % removes small blobs
-%         figure(3)
-%         imshow(Ythreshim)
+        %         figure(3)
+        %         imshow(Ythreshim)
         figure(1)
         bw = bwareaopen(Ythreshim,100);  %for high resolution, use 400 px as threshold.
         
@@ -133,13 +133,13 @@ end
                 set(himage,'Cdata',cdata)
             end
         end
-                    imgax = gca;
-            imghandle = imhandles(imgax);
-            parentfig = ancestor(imgax,'figure');
-            set(imgax,'ButtonDownFcn','');
-            set(imghandle,'ButtonDownFcn',@placePoint);
-            set(parentfig,'KeyPressFcn',  @noMorePoints);
-            requestedvar = 'MarkedPoints';
+        imgax = gca;
+        imghandle = imhandles(imgax);
+        parentfig = ancestor(imgax,'figure');
+        set(imgax,'ButtonDownFcn','');
+        set(imghandle,'ButtonDownFcn',@placePoint);
+        set(parentfig,'KeyPressFcn',  @noMorePoints);
+        requestedvar = 'MarkedPoints';
         
         % TODO: Check if we we have any umbrella locations for this frame.  If so, delete markers and create new ones
         %impoint2(varargin)
@@ -274,6 +274,7 @@ end
             for i = 1:size(kMeansActual,1)
                 impoint2(imgax,kMeansActual(i,:));
             end
+            beep
         end
         
         if finished
