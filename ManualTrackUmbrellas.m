@@ -178,11 +178,11 @@ end
         display(['Saving Frame ', num2str(frameNumber),', ', titleString,' ', num2str(size(pointLocations,1)),' umbrellas ', num2str(toc,'%.1f') ]);
     end
 
-    function kMeanEstimates = kmeansAlgorithm( kMeanEstimates, data)
+    function kMeanEstimates = kmeansAlgorithm( kMeanEstimates, data,iters)
         maxCost=10^20;
         
         num = size(data,1);
-        for iter = 1:3 % how many iterations of k-means?  5 seems to be enough
+        for iter = 1:iters % how many iterations of k-means?  5 seems to be enough
             
             k = size(kMeanEstimates,1);
             new_seeds = kMeanEstimates;
@@ -261,18 +261,21 @@ end
         end
         if strcmpi(evt.Key,'k');
             %call k-means, but first gather the needed data:
+            for c = 1:5
             kMeanEstimates = getUmbrellaCenters(imgax);
             [xcoord,ycoord] = ind2sub( size(bw), find(bw>0));
             nonBackgroundPx = [xcoord,ycoord];
             %kMeanEstimates are the xy pairs, one for each umbrella
             %data is every pixel that is not background.
             nonBackgroundPx = [nonBackgroundPx(:,2) nonBackgroundPx(:,1)];
-            kMeansActual = kmeansAlgorithm( kMeanEstimates, nonBackgroundPx);
+            kMeansActual = kmeansAlgorithm( kMeanEstimates, nonBackgroundPx,1);
             % update the location of every mean value.
             deleteUmbrellaCenters(imgax)
             
             for i = 1:size(kMeansActual,1)
                 impoint2(imgax,kMeansActual(i,:));
+                
+            end
             end
             beep
         end
